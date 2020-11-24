@@ -1,3 +1,7 @@
+'''
+POST   /products/<id>/change_quantity		Adds a stock change with the given amount for the given product
+'''
+
 from bson import json_util
 from bson.objectid import ObjectId
 

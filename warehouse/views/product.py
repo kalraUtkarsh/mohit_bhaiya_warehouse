@@ -1,3 +1,11 @@
+'''
+GET    /products            List all products
+POST   /products            Add a new product
+GET    /products/<id>       Get a product by id
+PATCH  /products/<id>       Modify a product
+DELETE /products/<id>       Delete a product
+'''
+
 from bson import json_util
 from bson.objectid import ObjectId
 
