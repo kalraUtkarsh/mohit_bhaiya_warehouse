@@ -13,9 +13,7 @@ COPY requirements.txt /app/
 RUN pip install -r requirements.txt
 
 # copy the project code
-COPY innopoints /app/innopoints
-COPY migrations /app/migrations
-COPY templates /app/templates
+COPY warehouse /app/warehouse
 COPY run.py /app/
 
 # expose the port
