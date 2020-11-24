@@ -97,6 +97,10 @@ class ProductDetailAPI(MethodView):
             '_id': ObjectId(product_id),
         })
 
+        mongo.db.stock_changes.delete_many({
+            'product_id': product_id,
+        })
+
         return jsonify({
             'success': result.deleted_count == 1,
         })
