@@ -16,10 +16,6 @@ def create_app(config='config.py'):
     app = Flask(__name__, static_folder=None)
     app.config.from_pyfile(config)
 
-    # Import DB models. Flask-SQLAlchemy doesn't do this automatically.
-    with app.app_context():
-        import_module('warehouse.models')
-
     # Initialize extensions/add-ons/plugins.
     mongo.init_app(app)
     login_manager.init_app(app)

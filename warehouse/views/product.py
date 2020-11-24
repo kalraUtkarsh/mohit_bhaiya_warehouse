@@ -1,3 +1,6 @@
+from bson import json_util
+from bson.objectid import ObjectId
+
 from flask.views import MethodView
 from flask import request, abort, jsonify
 
@@ -5,47 +8,65 @@ from warehouse.extensions import mongo
 from warehouse.blueprints import api
 
 
-@api.route('/products', methods=['POST'])
-def add_product():
-    # --- Data validation ---
-    if not request.is_json():
-        abort(400, description='Request must be in json')
+def sanitize(obj):
+    obj['_id'] = str(obj['_id'])
+    return obj
 
-    if not all(lambda key: key in request.json, ['name', 'manufacturer', 'price']):
-        abort(400, description='Request must include the name, manufacturer, and price')
+class ProductsAPI(MethodView):
+    def get(self):
+        products = mongo.db.products.find()
+        products = [sanitize(product) for product in products]
+        return jsonify(products)
 
-    name = request.json['name']
-    manufacturer = request.json['manufacturer']
-    price = request.json['price']
+    def post(self):
+        # --- Data validation ---
+        if not request.is_json:
+            abort(400, description='Request must be in json')
 
-    if not isinstance(name, str):
-        abort(400, description='name must be a string')
-    if not isinstance(manufacturer, str):
-        abort(400, description='manufacturer must be a string')
-    if not isinstance(price, int):
-        abort(400, description='price must be an integer')
+        if not all(key in request.json for key in ['name', 'manufacturer', 'price']):
+            abort(400, description='Request must include the name, manufacturer, and price')
 
-    # --- Storing the product ---
-    product = {
-        'name': name,
-        'manufacturer': manufacturer,
-        'price': price,
-    }
-    mongo.db.products.insert_one(product)
+        name = request.json['name']
+        manufacturer = request.json['manufacturer']
+        price = request.json['price']
 
-    return jsonify(product)
+        if not isinstance(name, str):
+            abort(400, description='name must be a string')
+        if not isinstance(manufacturer, str):
+            abort(400, description='manufacturer must be a string')
+        if not isinstance(price, int):
+            abort(400, description='price must be an integer')
+
+        # --- Storing the product ---
+        product = {
+            'name': name,
+            'manufacturer': manufacturer,
+            'price': price,
+        }
+        mongo.db.products.insert_one(product)
+
+        return jsonify(sanitize(product))
+
+api.add_url_rule('/products',
+                 view_func=ProductsAPI.as_view('products_api'),
+                 methods=('GET', 'POST'),
+                )
 
 
 class ProductDetailAPI(MethodView):
-    def get(self, product_id: str):
+    def get(self, product_id):
+        print(product_id)
         product = mongo.db.products.find_one_or_404({
-            '_id': product_id,
+            '_id': ObjectId(product_id),
         })
-        print(product)
-        return product
+        return jsonify(sanitize(product))
+    def patch(self, product_id):
+        pass
+    def delete(self, product_id):
+        pass
 
 
-api.add_url_rule('/products/<int:product_id>',
+api.add_url_rule('/products/<product_id>',
                  view_func=ProductDetailAPI.as_view('product_api'),
                  methods=('GET',),
                 )

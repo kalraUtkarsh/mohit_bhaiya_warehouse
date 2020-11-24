@@ -4,8 +4,6 @@ To register a blueprint, add it to the `all_blueprints` tuple.
 
 from flask import Blueprint
 
-from innopoints.core.helpers import csrf_protect, require_json
-
 
 def _factory(partial_module_string, url_prefix='/'):
     """Generates blueprint objects for view modules.
@@ -22,6 +20,6 @@ def _factory(partial_module_string, url_prefix='/'):
     return blueprint
 
 
-api = _factory('api', url_prefix='/api/v1')
+api = _factory('api', url_prefix='/api')
 
 all_blueprints = (api,)
