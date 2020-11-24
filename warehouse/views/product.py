@@ -9,7 +9,8 @@ from warehouse.blueprints import api
 
 
 def sanitize(obj):
-    obj['_id'] = str(obj['_id'])
+    if '_id' in obj:
+        obj['_id'] = str(obj['_id'])
     return obj
 
 class ProductsAPI(MethodView):
@@ -55,18 +56,57 @@ api.add_url_rule('/products',
 
 class ProductDetailAPI(MethodView):
     def get(self, product_id):
-        print(product_id)
         product = mongo.db.products.find_one_or_404({
             '_id': ObjectId(product_id),
         })
         return jsonify(sanitize(product))
+
     def patch(self, product_id):
-        pass
+        product = mongo.db.products.find_one_or_404({
+            '_id': ObjectId(product_id),
+        })
+        # --- Data validation ---
+        if not request.is_json:
+            abort(400, description='Request must be in json')
+
+        if not any(key in request.json for key in ['name', 'manufacturer', 'price']):
+            abort(400, description='Request must include the name, manufacturer, or price')
+
+        name = request.json.get('name', product['name'])
+        manufacturer = request.json.get('manufacturer', product['manufacturer'])
+        price = request.json.get('price', product['price'])
+
+        if not isinstance(name, str):
+            abort(400, description='name must be a string')
+        if not isinstance(manufacturer, str):
+            abort(400, description='manufacturer must be a string')
+        if not isinstance(price, int):
+            abort(400, description='price must be an integer')
+
+        product = {
+            'name': name,
+            'manufacturer': manufacturer,
+            'price': price,
+        }
+        mongo.db.products.update({'_id': ObjectId(product_id)}, product)
+
+        return jsonify(sanitize(product))
+
     def delete(self, product_id):
-        pass
+        mongo.db.products.find_one_or_404({
+            '_id': ObjectId(product_id),
+        })
+
+        result = mongo.db.products.delete_one({
+            '_id': ObjectId(product_id),
+        })
+
+        return jsonify({
+            'success': result.deleted_count == 1,
+        })
 
 
 api.add_url_rule('/products/<product_id>',
                  view_func=ProductDetailAPI.as_view('product_api'),
-                 methods=('GET',),
+                 methods=('GET', 'PATCH', 'DELETE'),
                 )
