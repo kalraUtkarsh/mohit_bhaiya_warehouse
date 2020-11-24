@@ -6,17 +6,13 @@ from flask import request, abort, jsonify
 
 from warehouse.extensions import mongo
 from warehouse.blueprints import api
+from warehouse.helpers import prepare_product
 
-
-def sanitize(obj):
-    if '_id' in obj:
-        obj['_id'] = str(obj['_id'])
-    return obj
 
 class ProductsAPI(MethodView):
     def get(self):
         products = mongo.db.products.find()
-        products = [sanitize(product) for product in products]
+        products = [prepare_product(product) for product in products]
         return jsonify(products)
 
     def post(self):
@@ -46,7 +42,7 @@ class ProductsAPI(MethodView):
         }
         mongo.db.products.insert_one(product)
 
-        return jsonify(sanitize(product))
+        return jsonify(prepare_product(product))
 
 api.add_url_rule('/products',
                  view_func=ProductsAPI.as_view('products_api'),
@@ -59,7 +55,7 @@ class ProductDetailAPI(MethodView):
         product = mongo.db.products.find_one_or_404({
             '_id': ObjectId(product_id),
         })
-        return jsonify(sanitize(product))
+        return jsonify(prepare_product(product))
 
     def patch(self, product_id):
         product = mongo.db.products.find_one_or_404({
@@ -90,7 +86,7 @@ class ProductDetailAPI(MethodView):
         }
         mongo.db.products.update({'_id': ObjectId(product_id)}, product)
 
-        return jsonify(sanitize(product))
+        return jsonify(prepare_product(product))
 
     def delete(self, product_id):
         mongo.db.products.find_one_or_404({
