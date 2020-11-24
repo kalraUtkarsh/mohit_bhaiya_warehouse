@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    env_file:
+      - backend.env
+    ports:
+      - 80:7507
+    depends_on:
+      - db
+
+  db:
+    image: mongo:4.4
+    env_file:
+      - mongo.env
+    ports:
+      - 27017:27017
+    volumes:
+      - database
+
+volumes:
+  database:
+
