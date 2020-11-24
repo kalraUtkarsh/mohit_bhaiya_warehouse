@@ -9,6 +9,8 @@ services:
       - 80:7507
     depends_on:
       - db
+    volumes:
+      - ./warehouse:/app/warehouse
 
   db:
     image: mongo:4.4
